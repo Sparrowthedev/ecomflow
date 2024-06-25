@@ -1,15 +1,21 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
-import logoutAction from "./Logout";
-import { buttons }  from '../../lib/random'
-import { useFormState } from "react-dom";
+import { FormEvent, useState } from "react";
+import { buttons } from "../../lib/random";
+import { logout } from "@/lib/lib";
+import { useRouter } from "next/navigation";
 
 const SideNav: React.FC = () => {
+  const router = useRouter();
   const [activeButton, setActiveButton] = useState<number>(1);
-  const [error, formAction] = useFormState(logoutAction, undefined);
 
+  const handleLogout = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
+    await logout();
+    router.push("/");
+    router.refresh();
+  };
 
   const handleButtonClick = (id: number) => {
     setActiveButton(id);
@@ -30,7 +36,9 @@ const SideNav: React.FC = () => {
               <Link
                 href={button.href}
                 className={`flex items-center gap-2 p-2 rounded-md ${
-                  activeButton === button.id ? "text-[#ff5900] bg-[#363535]" : ""
+                  activeButton === button.id
+                    ? "text-[#ff5900] bg-[#363535]"
+                    : ""
                 }`}
               >
                 {button.icon} {button.label}
@@ -38,21 +46,18 @@ const SideNav: React.FC = () => {
             </li>
           ))}
           <li className="p-2 flex items-center gap-2 hover:bg-[#363535] rounded-md hover:text-[#ff5900]">
-            <form action={formAction}>
-            <button
-              type="submit"
-              className="flex items-center gap-2"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-[25px] h-[25px] cursor-pointer"
-              >
-                <path d="M12 11V8L16 12L12 16V13H8V11H12ZM12 2C17.52 2 22 6.48 22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2ZM12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20Z"></path>
-              </svg>
-              Signout
-            </button>
+            <form onSubmit={handleLogout}>
+              <button type="submit" className="flex items-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-[25px] h-[25px] cursor-pointer"
+                >
+                  <path d="M12 11V8L16 12L12 16V13H8V11H12ZM12 2C17.52 2 22 6.48 22 12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2ZM12 20C16.42 20 20 16.42 20 12C20 7.58 16.42 4 12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20Z"></path>
+                </svg>
+                Signout
+              </button>
             </form>
           </li>
         </ul>

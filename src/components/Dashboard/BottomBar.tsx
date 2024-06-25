@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 interface Payment {
   id: string;
@@ -10,57 +11,33 @@ interface Payment {
   };
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 const BottomBar = () => {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [currentMonthTotal, setCurrentMonthTotal] = useState(0);
-  const [totalAmount, setTotalAmount] = useState(0);
+  const { data, error } = useSWR("/api/payments", fetcher);
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1; // getMonth() is zero-indexed
+  const currentYear = currentDate.getFullYear();
+  
+  const total = data?.payment?.reduce(
+    (total: number, payment: Payment) => total + payment.fields.price,
+    0
+  );
 
-  useEffect(() => {
-    const fetchPayments = async () => {
-      const res = await fetch("/api/payments", {
-        method: "GET",
-      });
-      const data = await res.json();
-      setPayments(data.payment);
-    };
-
-    fetchPayments();
-  }, []);
-
-  useEffect(() => {
-    if (payments?.length > 0) {
-      // Get the current month and year
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth() + 1; // getMonth() is zero-indexed
-      const currentYear = currentDate.getFullYear();
-
-      const getTotalAmount = () => {
-        return payments.reduce(
-          (total, payment) => total + payment.fields.price,
+  const monthTotal = data?.payment?.filter((payment: Payment) => {
+          const [paymentYear, paymentMonth] = payment.fields.date
+            .split("-")
+            .map(Number);
+          return paymentMonth === currentMonth && paymentYear === currentYear;
+        })
+        .reduce(
+          (total: number, payment: Payment) => total + payment.fields.price,
           0
-        );
-      };
+  );
 
-      const getTotalForMonth = (month: number, year: number) => {
-        return payments
-          .filter((payment) => {
-            const [paymentYear, paymentMonth] = payment.fields.date
-              .split("-")
-              .map(Number);
-            return paymentMonth === month && paymentYear === year;
-          })
-          .reduce((total, payment) => total + payment.fields.price, 0);
-      };
-
-      // Calculate total amount for the current month
-      const monthTotal = getTotalForMonth(currentMonth, currentYear);
-      setCurrentMonthTotal(monthTotal);
-
-      // Calculate total amount for all payments
-      const total = getTotalAmount();
-      setTotalAmount(total);
-    }
-  }, [payments]);
+  
+  if (error) return <div>Failed to load</div>;
+  if (!data) return <div>Loading...</div>;
 
   return (
     <div className="mt-7 flex flex-col gap-3 flex-wrap sm:flex-row">
@@ -98,7 +75,7 @@ const BottomBar = () => {
           Total order per brand for the current month
         </p>
 
-        <p className="text-white mt-4 text-3xl">${currentMonthTotal}</p>
+        <p className="text-white mt-4 text-3xl">${monthTotal}</p>
       </div>
       <div className="p-5 border rounded-2xl border-[grey] sm:w-[320px] md:w-[350px] bg-[#2020217e]">
         <div className="flex items-center gap-2">
@@ -117,7 +94,7 @@ const BottomBar = () => {
         </p>
 
         <p className="text-white mt-4 text-3xl">
-          {payments ? payments.length : 0}
+          {data.payment ? data.payment.length : 0}
         </p>
       </div>
       <div className="p-5 border rounded-2xl border-[grey] sm:w-[320px] md:w-[350px] bg-[#2020217e]">
@@ -136,7 +113,7 @@ const BottomBar = () => {
           All brands combined across all time
         </p>
 
-        <p className="mt-4 text-3xl text-[#34bd5c]">+${totalAmount}</p>
+        <p className="mt-4 text-3xl text-[#34bd5c]">+${total}</p>
       </div>
     </div>
   );

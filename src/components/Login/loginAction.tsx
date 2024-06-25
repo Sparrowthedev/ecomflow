@@ -11,6 +11,8 @@ export default async function loginAction(
   const username = formData.get("username");
   const password = formData.get("password");
 
+  // console.log(username, password);
+
   //  Send to our api route
   const res = await fetch("http://localhost:3000/api/auth/login", {
     method: "POST",

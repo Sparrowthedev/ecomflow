@@ -1,31 +1,34 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-// import * as jose from "jose";
+import { NextResponse, type NextRequest } from 'next/server'
+import { decrypt, encrypt } from './lib/lib';
 
-// secret
-const secretKey = "MRKHiMsRTzF1nNlAtJXnI6mjA7aQRbj3D4d2GQt0HDk=";
-
-// This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
-  // Check for cookie
-  const cookie = cookies().get("session");
-  if (!cookie) {
-    return NextResponse.redirect(new URL("/", request.url));
+  const session = request.cookies.get("session")?.value;
+
+  if (session && !request.nextUrl.pathname.startsWith('/dashboard')) {
+    return Response.redirect(new URL('/dashboard', request.url))
   }
 
-  // Validate it
-  // const secret = new TextEncoder().encode(secretKey);
-  // const jwt = cookie.value;
+  if (session && !request.nextUrl.pathname.startsWith('/')) {
+    return Response.redirect(new URL('/dashboard', request.url))
+  }
 
-  // try {
-  //   const { payload } = await jose.jwtVerify(jwt, secret, {});
-  //   console.log(payload);
-  // } catch (err) {
-  //   return NextResponse.redirect(new URL("/", request.url));
-  // }
+  if (!session && request.nextUrl.pathname.startsWith('/dashboard' || '/dashboard/payments')) {
+    return Response.redirect(new URL('/', request.url))
+  }
+
+  if (session) {
+    const parsed = await decrypt(session);
+    parsed.expires = new Date(Date.now() + 10 * 1000);
+    const res = NextResponse.next();
+    res.cookies.set({
+      name: "session",
+      value: await encrypt(parsed),
+      httpOnly: true,
+      expires: parsed.expires,
+    });
+  }
 }
 
 export const config = {
-  matcher: ["/dashboard", "/dashboard/payments"]
-};
+  matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
+}

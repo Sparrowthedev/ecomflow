@@ -1,12 +1,9 @@
 "use client";
-// import { login } from "@/lib/lib";
 import { useFormState } from "react-dom";
 import loginAction from "./loginAction";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+
 
 export default function Login(){
-  const router = useRouter()
   const [error, formAction] = useFormState(loginAction, undefined);
 
   return (

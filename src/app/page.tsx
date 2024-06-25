@@ -10,7 +10,7 @@ export default async function Home() {
   // }
 
   return (
-    <main className="bg-[#0b0b0b]">
+    <main>
       <Login />
     </main>
   );

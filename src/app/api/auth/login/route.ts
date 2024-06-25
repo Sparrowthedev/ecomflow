@@ -28,6 +28,7 @@ export async function POST(request: Request) {
           { status: 400 }
         );
     } 
+    
     // Create the session
     const expires = new Date(Date.now() + 10 * 1000);
     const session = await encrypt({ user, expires });

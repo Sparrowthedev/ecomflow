@@ -1,8 +1,5 @@
 "use client";
-
-import html2canvas from "html2canvas";
-import { useEffect, useRef, useState } from "react";
-import jsPDF from "jspdf";
+import useSWR from "swr";
 
 interface Payment {
   id: string;
@@ -12,51 +9,11 @@ interface Payment {
   };
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+
 const Payments = () => {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const receiptRef = useRef(null);
-
-  useEffect(() => {
-    const fetchPayments = async () => {
-      const res = await fetch("/api/payments", {
-        method: "GET",
-      });
-      const data = await res.json();
-      setPayments(data.payment);
-    };
-
-    fetchPayments();
-  }, []);
-
-  const generateReceipt = () => {
-    if (receiptRef.current) {
-      html2canvas(receiptRef.current).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF();
-
-        // Calculate width and height of the PDF page
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-
-        // Calculate width and height of the image
-        const imgWidth = canvas.width;
-        const imgHeight = canvas.height;
-
-        // Determine the scale factor to fit the image within the PDF page
-        const widthScale = pdfWidth / imgWidth;
-        const heightScale = pdfHeight / imgHeight;
-        const scale = Math.min(widthScale, heightScale);
-
-        // Calculate the new dimensions
-        const imgScaledWidth = imgWidth * scale;
-        const imgScaledHeight = imgHeight * scale;
-
-        pdf.addImage(imgData, 'PNG', 0, 0, imgScaledWidth, imgScaledHeight);
-        pdf.save(`receipt.pdf`);
-      });
-    }
-  };
-
+  const { data, error } = useSWR("/api/payments", fetcher);
 
   return (
     <div className="px-7 lg:p-0 text-white">
@@ -64,7 +21,7 @@ const Payments = () => {
         All payments
       </h1>
 
-      {payments.map((payment) => (
+      {data?.payment?.map((payment: Payment) => (
         <div
           key={payment.id}
           className="flex items-center justify-between mt-6 border-[grey] bg-[#2020217e] p-5 border rounded-2xl"
@@ -81,7 +38,7 @@ const Payments = () => {
           </div>
 
           <div>
-            <button onClick={() => generateReceipt()}>
+            <button>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"

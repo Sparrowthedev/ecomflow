@@ -19,7 +19,7 @@ export default function Layout({
 
   return (
     <html lang="en">
-      <body className="bg-[#0b0b0b]">
+      <body>
         <Dashboard isBottomNavbarVisible={isBottomNavbarVisible} toggleNavOpen={toggleNavOpen} toggleNavClose={toggleNavClose}>{children}</Dashboard>
       </body>
     </html>
